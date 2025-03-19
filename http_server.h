@@ -5,11 +5,10 @@
 #include <QByteArray>
 #include <QMap>
 #include <QMutex>
-#include <QThreadPool>
 #include <QVariant>
 #include "httplib.h"
 
-// Struct to hold request data
+
 struct RequestData {
     QString taskId;
     QByteArray payload;
@@ -17,7 +16,7 @@ struct RequestData {
     QVariantMap metadata;
 };
 
-// Struct to hold response data
+
 struct ResponseData {
     QString taskId;
     QByteArray payload;
@@ -54,7 +53,6 @@ private:
     std::unique_ptr<httplib::Server> server_;
     QMutex mutex_;
     bool isRunning_;
-    QThreadPool threadPool_;
     
     // Map to store pending responses
     QMap<QString, httplib::Response*> pendingResponses_;

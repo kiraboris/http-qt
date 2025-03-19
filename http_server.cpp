@@ -11,8 +11,16 @@ HttpServer::HttpServer(QObject *parent)
     , server_(std::make_unique<httplib::Server>())
     , isRunning_(false) {
     
-    // Configure thread pool
-    threadPool_.setMaxThreadCount(QThread::idealThreadCount());
+    // Configure server's thread pool for parallel request handling
+    // Use the number of CPU cores for optimal performance
+    server_->new_task_queue = []{ return new httplib::ThreadPool(QThread::idealThreadCount()); };
+    
+    // Configure server settings
+    server_->set_keep_alive_max_count(QThread::idealThreadCount() * 2);  // Max concurrent connections
+    server_->set_payload_max_length(1024 * 1024 * 50);  // 50MB max payload
+    server_->set_read_timeout(5, 0);  // 5 seconds read timeout
+    server_->set_write_timeout(5, 0); // 5 seconds write timeout
+    server_->set_mount_point("/", ".");
     setupRoutes();
 }
 
@@ -49,9 +57,6 @@ bool HttpServer::start(const QString& host, int port) {
 void HttpServer::stop() {
     QMutexLocker locker(&mutex_);
     if (!isRunning_) return;
-
-    // Wait for all tasks to complete
-    threadPool_.waitForDone();
 
     server_->stop();
     isRunning_ = false;
